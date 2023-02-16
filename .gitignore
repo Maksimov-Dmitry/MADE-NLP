@@ -1,5 +1,3 @@
 *DS_Store
 *.ipynb_checkpoints
 *__pycache__
-homeworks/lab01_unsupervised_translation/uk.txt
-homeworks/lab01_unsupervised_translation/*.vec
