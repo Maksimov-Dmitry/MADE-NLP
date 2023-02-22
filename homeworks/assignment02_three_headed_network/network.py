@@ -1,12 +1,6 @@
-
-import numpy as np
-import pandas as pd
-
 import torch
 from torch import nn
 import torch.nn.functional as F
-
-import tqdm
 
 
 class ThreeInputsNet(nn.Module):
@@ -14,20 +8,32 @@ class ThreeInputsNet(nn.Module):
         super(ThreeInputsNet, self).__init__()
         self.title_emb = nn.Embedding(n_tokens, embedding_dim=hid_size)
         self.title = nn.Sequential(
-            nn.Conv1d(hid_size, hid_size * 2, 3),
+            nn.Conv1d(hid_size, hid_size * 2, 3, padding='same'),
+            nn.ReLU(),
+            nn.Conv1d(hid_size * 2, hid_size * 2, 3, padding='same'),
+            nn.BatchNorm1d(hid_size * 2),
             nn.ReLU(),
             nn.AdaptiveMaxPool1d(1),
         )   
         
         self.full_emb = nn.Embedding(num_embeddings=n_tokens, embedding_dim=hid_size)
         self.full = nn.Sequential(
-            nn.Conv1d(hid_size, hid_size * 2, 3),
+            nn.Conv1d(hid_size, hid_size * 2, 3, padding='same'),
+            nn.ReLU(),
+            nn.Conv1d(hid_size * 2, hid_size * 4, 3, padding='same'),
+            nn.BatchNorm1d(hid_size * 4),
+            nn.ReLU(),
+            nn.Conv1d(hid_size * 4, hid_size * 4, 3, padding='same'),
+            nn.BatchNorm1d(hid_size * 4),
             nn.ReLU(),
             nn.AdaptiveMaxPool1d(1),
         )
         
         self.category_out = nn.Sequential(
             nn.Linear(n_cat_features, hid_size),
+            nn.ReLU(),
+            nn.Linear(hid_size, hid_size * 2),
+            nn.BatchNorm1d(hid_size * 2),
             nn.ReLU(),
         )
 
@@ -44,8 +50,8 @@ class ThreeInputsNet(nn.Module):
         input1, input2, input3 = whole_input
         title_beg = self.title_emb(input1).permute((0, 2, 1))
         title = self.title(title_beg)
-        
         full_beg = self.full_emb(input2).permute((0, 2, 1))
+
         full = self.full(full_beg)      
         
         category = self.category_out(input3)     
